@@ -1,4 +1,5 @@
-from enum import Enum,unique
+from enum import Enum
+
 
 class GoodWillLocations(Enum):
     """
@@ -210,8 +211,6 @@ class GoodWillLocations(Enum):
     PA_Berwyn = "30"
     # Goodwill Industries of North Central PA Inc. 
     PA_Falls_Creek = "146"
-    # Goodwill Industries of North Central PA Inc. 
-    PA_DuBois = "345"
     # Goodwill Industries NCPA 
     PA_Falls_Creek_NCPA = "341"
     # Goodwill Keystone Area Harrisburg 
@@ -222,8 +221,6 @@ class GoodWillLocations(Enum):
     PA_Reading = "60"
     # Goodwill Industries of Northeastern Pennsylvania 
     PA_Scranton = "179"
-    # Goodwill Industries of Upstate/Midlands South Carolina 
-    SC_Columbia = "193"
     # Goodwill Industries of Upstate/Midlands South Carolina 
     SC_Greenville = "22"
     # Palmetto Goodwill 
@@ -268,8 +265,6 @@ class GoodWillLocations(Enum):
     UT_Salt_Lake_City = "192"
     # Rappahannock Goodwill Industries Inc. 
     VA_Fredericksburg = "145"
-    # Goodwill of Central & Coastal Virginia
-    VA_Hampton = "348"
     # Goodwill of Central & Coastal Virginia
     VA_Richmond = "200"
     # Goodwill Industries of the Valleys 

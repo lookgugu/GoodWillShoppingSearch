@@ -1,4 +1,5 @@
-from enum import Enum,unique
+from enum import Enum
+
 
 class GoodWillCategories(Enum):
     Empty = ""
@@ -63,7 +64,7 @@ class GoodWillCategories(Enum):
     BulkScienceAndEducation = "2265"
     BulkSeasonalAndHoliday = "2252"
     BulkSports = "2253"
-    BulkTablewareandKitchenware = "2254"
+    BulkTablewareAndKitchenware = "2254"
     BulkTools = "2266"
     BulkToysDollsGames = "2255"
     BulkTransportation = "2267"

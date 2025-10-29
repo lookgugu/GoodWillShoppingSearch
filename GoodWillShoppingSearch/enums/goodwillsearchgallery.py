@@ -1,4 +1,5 @@
-from enum import Enum, unique
+from enum import Enum
+
 
 class GoodWillSearchGallery(Enum):
     NewToday = "New"
