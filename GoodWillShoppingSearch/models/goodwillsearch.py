@@ -51,6 +51,8 @@ class GoodWillSearch:
             self.search_params_by_json(json_data)
 
     def search_params_by_json(self, json_data):
+        if 'keyword_search' in json_data:
+            self.keyword_search = json_data['keyword_search']
         if 'search_gallery' in json_data:
             self._search_gallery.value_set(GoodWillSearchGallery(json_data['search_gallery']))
         if 'categories' in json_data:
