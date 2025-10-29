@@ -1,5 +1,5 @@
 import os
-import pytz
+from tzlocal import get_localzone
 from GoodWillShoppingSearch.models.goodwillsearch import GoodWillSearch
 
 
@@ -9,7 +9,7 @@ def main():
 
 
 def search_byjson():
-    SGW_TIMEZONE = pytz.timezone('America/Chicago')
+    SGW_TIMEZONE = get_localzone()
     dir_path = os.path.dirname(os.path.realpath(__file__))
     searchJson = os.path.join(dir_path, 'austincomputer.json')
     search = GoodWillSearch(SGW_TIMEZONE, searchJson)
@@ -19,7 +19,7 @@ def search_byjson():
 
 
 def run_search():
-    SGW_TIMEZONE = pytz.timezone('America/Chicago')
+    SGW_TIMEZONE = get_localzone()
     search = GoodWillSearch(SGW_TIMEZONE)
 
     products = {
