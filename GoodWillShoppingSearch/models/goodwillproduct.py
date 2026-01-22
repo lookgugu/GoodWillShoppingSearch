@@ -17,11 +17,14 @@ class GoodWillProduct:
         print(self.end_date)
 
     def parse_product(self, product: PageElement):
-        self.price = product.find('div', {'class': 'price'}).text.split(' ')[0].strip()[1:]
-        self.price = float(self.price.replace(',', ''))
-        self.listing = product.find('div', {'class': 'title'}).text.strip().split('\n')[0].strip()
+        price_text = product.find('div', {'class': 'price'}).text.split(' ')[0].strip()
+        self.price = float(price_text.lstrip('$').replace(',', ''))
+
+        title_text = product.find('div', {'class': 'title'}).text.strip()
+        self.listing = unidecode(title_text.split('\n')[0].strip())
+
         self.product_id = product.find('div', {'class': 'product-number'}).text.split(' ')[2]
-        self.url = 'https://www.shopgoodwill.com/Item/{}'.format(self.product_id)
+        self.url = f'https://www.shopgoodwill.com/Item/{self.product_id}'
 
         timer_element = product.find('div', {'class': 'timer countdown-classic product-countdown'})
         if timer_element:
@@ -31,5 +34,3 @@ class GoodWillProduct:
         else:
             self.end_date = datetime.now(self.time_zone)
             self.duration = timedelta(0)
-
-        self.listing = unidecode(self.listing)

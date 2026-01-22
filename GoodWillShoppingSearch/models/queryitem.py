@@ -13,9 +13,6 @@ class QueryItem:
         self.query_value = query_value
 
     def get_value(self):
-        if type(self.query_value) is str:
-            return self.query_value.lower()
-        elif isinstance(self.query_value, enum.Enum):
+        if isinstance(self.query_value, enum.Enum):
             return str(self.query_value.value)
-        else:
-            return str(self.query_value).lower()
+        return str(self.query_value).lower()

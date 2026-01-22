@@ -1,9 +1,9 @@
 from datetime import datetime
-from urllib.parse import quote
-import pytz
-from bs4 import BeautifulSoup
-import requests
 import json
+
+from bs4 import BeautifulSoup
+import pytz
+import requests
 
 from GoodWillShoppingSearch.models.queryitem import QueryItem
 from GoodWillShoppingSearch.enums.goodwillsearchgallery import GoodWillSearchGallery
@@ -53,71 +53,67 @@ class GoodWillSearch:
     def search_params_by_json(self, json_data):
         if 'keyword_search' in json_data:
             self.keyword_search = json_data['keyword_search']
-        if 'search_gallery' in json_data:
-            self._search_gallery.value_set(GoodWillSearchGallery(json_data['search_gallery']))
-        if 'categories' in json_data:
-            self._categories.value_set(GoodWillCategories(json_data['categories']))
-        if 'good_will_location' in json_data:
-            self._good_will_location.value_set(GoodWillLocations(json_data['good_will_location']))
-        if 'low_price' in json_data:
-            self._low_price.value_set(json_data['low_price'])
-        if 'high_price' in json_data:
-            self._high_price.value_set(json_data['high_price'])
-        if 'show_buy_now_only' in json_data:
-            self._show_buy_now_only.value_set(json_data['show_buy_now_only'])
-        if 'show_pick_up_only' in json_data:
-            self._show_pick_up_only.value_set(json_data['show_pick_up_only'])
-        if 'hide_pick_up_only' in json_data:
-            self._hide_pick_up_only.value_set(json_data['hide_pick_up_only'])
-        if 'show_one_cent_ship_only' in json_data:
-            self._show_one_cent_ship_only.value_set(json_data['show_one_cent_ship_only'])
-        if 'search_description' in json_data:
-            self._search_description.value_set(json_data['search_description'])
-        if 'show_closed_auctions' in json_data:
-            self._show_closed_auctions.value_set(json_data['show_closed_auctions'])
-        if 'closed_auction_end_date' in json_data:
-            self._closed_auction_end_date.value_set(json_data['closed_auction_end_date'])
-        if 'day_back' in json_data:
-            self._day_back.value_set(json_data['day_back'])
-        if 'search_canada' in json_data:
-            self._search_canada.value_set(json_data['search_canada'])
-        if 'search_international' in json_data:
-            self._search_international.value_set(json_data['search_international'])
-        if 'field_order' in json_data:
-            self._field_order.value_set(json_data['field_order'])
-        if 'page_number' in json_data:
-            self._page_number.value_set(json_data['page_number'])
-        if 'page_size' in json_data:
-            self._page_size.value_set(json_data['page_size'])
-        if 'short_description' in json_data:
-            self._short_description.value_set(json_data['short_description'])
-        if 'saved_search_id' in json_data:
-            self._saved_search_id.value_set(json_data['saved_search_id'])
+
+        enum_mappings = {
+            'search_gallery': (self._search_gallery, GoodWillSearchGallery),
+            'categories': (self._categories, GoodWillCategories),
+            'good_will_location': (self._good_will_location, GoodWillLocations),
+        }
+        for key, (query_item, enum_class) in enum_mappings.items():
+            if key in json_data:
+                query_item.value_set(enum_class(json_data[key]))
+
+        simple_mappings = {
+            'low_price': self._low_price,
+            'high_price': self._high_price,
+            'show_buy_now_only': self._show_buy_now_only,
+            'show_pick_up_only': self._show_pick_up_only,
+            'hide_pick_up_only': self._hide_pick_up_only,
+            'show_one_cent_ship_only': self._show_one_cent_ship_only,
+            'search_description': self._search_description,
+            'show_closed_auctions': self._show_closed_auctions,
+            'closed_auction_end_date': self._closed_auction_end_date,
+            'day_back': self._day_back,
+            'search_canada': self._search_canada,
+            'search_international': self._search_international,
+            'field_order': self._field_order,
+            'page_number': self._page_number,
+            'page_size': self._page_size,
+            'short_description': self._short_description,
+            'saved_search_id': self._saved_search_id,
+        }
+        for key, query_item in simple_mappings.items():
+            if key in json_data:
+                query_item.value_set(json_data[key])
 
     def print_search_params(self):
         print(f'url: {self.url}')
-        print(f'search_gallery: {self._search_gallery.get_value()}')
-        print(f'keyword_search: {self._keyword_search.get_value()}')
-        print(f'categories: {self._categories.get_value()}')
-        print(f'good_will_location: {self._good_will_location.get_value()}')
-        print(f'low_price: {self._low_price.get_value()}')
-        print(f'high_price: {self._high_price.get_value()}')
-        print(f'show_buy_now_only: {self._show_buy_now_only.get_value()}')
-        print(f'show_pick_up_only: {self._show_pick_up_only.get_value()}')
-        print(f'hide_pick_up_only: {self._hide_pick_up_only.get_value()}')
-        print(f'show_one_cent_ship_only: {self._show_one_cent_ship_only.get_value()}')
-        print(f'search_description: {self._search_description.get_value()}')
-        print(f'show_closed_auctions: {self._show_closed_auctions.get_value()}')
-        print(f'closed_auction_end_date: {self._closed_auction_end_date.get_value()}')
-        print(f'day_back: {self._day_back.get_value()}')
-        print(f'search_canada: {self._search_canada.get_value()}')
-        print(f'search_international: {self._search_international.get_value()}')
-        print(f'field_order: {self._field_order.get_value()}')
-        print(f'page_number: {self._page_number.get_value()}')
-        print(f'page_size: {self._page_size.get_value()}')
-        print(f'short_description: {self._short_description.get_value()}')
-        print(f'saved_search_id: {self._saved_search_id.get_value()}')
-        print(f'use_buyer_preferences: {self._use_buyer_preferences.get_value()}')
+        params = {
+            'search_gallery': self._search_gallery,
+            'keyword_search': self._keyword_search,
+            'categories': self._categories,
+            'good_will_location': self._good_will_location,
+            'low_price': self._low_price,
+            'high_price': self._high_price,
+            'show_buy_now_only': self._show_buy_now_only,
+            'show_pick_up_only': self._show_pick_up_only,
+            'hide_pick_up_only': self._hide_pick_up_only,
+            'show_one_cent_ship_only': self._show_one_cent_ship_only,
+            'search_description': self._search_description,
+            'show_closed_auctions': self._show_closed_auctions,
+            'closed_auction_end_date': self._closed_auction_end_date,
+            'day_back': self._day_back,
+            'search_canada': self._search_canada,
+            'search_international': self._search_international,
+            'field_order': self._field_order,
+            'page_number': self._page_number,
+            'page_size': self._page_size,
+            'short_description': self._short_description,
+            'saved_search_id': self._saved_search_id,
+            'use_buyer_preferences': self._use_buyer_preferences,
+        }
+        for name, query_item in params.items():
+            print(f'{name}: {query_item.get_value()}')
 
 
     def search(self, keyword_search: str):
