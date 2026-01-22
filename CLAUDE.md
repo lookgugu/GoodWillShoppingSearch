@@ -9,8 +9,39 @@ GoodWillShoppingSearch is a Python application that automates searching for prod
 ## Common Commands
 
 ### Running the Application
+
+**Traditional Method (JSON-based):**
 ```bash
 python main.py
+```
+This runs all saved searches in the [saved_searches/](saved_searches/) directory.
+
+**CLI Method (Command-line interface):**
+```bash
+# Quick search without saving
+python cli.py search "laptop" --category computers --max-price 500
+
+# Create a saved search interactively
+python cli.py create my-search
+
+# Run a specific saved search
+python cli.py run my-search
+
+# Run all saved searches
+python cli.py run --all
+
+# List all saved searches
+python cli.py list
+
+# Edit a saved search
+python cli.py edit my-search
+
+# Delete a saved search
+python cli.py delete my-search
+
+# Browse categories and locations
+python cli.py list-categories --filter computer
+python cli.py list-locations --filter TX
 ```
 
 ### Setup
@@ -30,6 +61,153 @@ pip install -r requirements.txt
 - requests - HTTP requests to ShopGoodwill.com
 - pytz - Timezone support (legacy, used alongside tzlocal)
 - tzlocal - Local timezone detection
+- click - CLI framework for command-line interface
+- tabulate - Table formatting for CLI output
+
+## CLI Interface
+
+### Overview
+
+The CLI provides a modern command-line interface for searching ShopGoodwill.com. It offers:
+- **Quick searches** without creating JSON files
+- **Interactive wizards** for creating and editing saved searches
+- **Multiple output formats** (table, JSON, quiet)
+- **Fuzzy matching** for categories and locations
+- **Backward compatibility** with existing JSON-based workflow
+
+### CLI Architecture
+
+**Entry Point:** [cli.py](cli.py)
+- Uses Click framework for command parsing
+- All commands defined as Click command functions
+- Integrates with existing GoodWillSearch models (zero modifications to core code)
+
+**Key Components:**
+
+1. **Enum Utilities** ([GoodWillShoppingSearch/utils/enum_utils.py](GoodWillShoppingSearch/utils/enum_utils.py))
+   - Fuzzy matching for category/location names using difflib
+   - Resolves user-friendly names to enum values
+   - Example: "computers" → GoodWillCategories.Computers (ID: 30)
+
+2. **Search Wrapper** ([GoodWillShoppingSearch/utils/search_wrapper.py](GoodWillShoppingSearch/utils/search_wrapper.py))
+   - Executes searches with output control
+   - Suppresses default print_product() output for CLI formatting
+   - Returns product lists for custom formatting
+
+3. **Config Manager** ([GoodWillShoppingSearch/utils/config_manager.py](GoodWillShoppingSearch/utils/config_manager.py))
+   - CRUD operations for saved search JSON files
+   - Interactive prompts for creating/editing searches
+   - Validates search parameters
+
+4. **Output Formatters** ([GoodWillShoppingSearch/formatters/output.py](GoodWillShoppingSearch/formatters/output.py))
+   - `table` - Pretty table format with aligned columns
+   - `json` - Structured JSON output for scripting
+   - `quiet` - URLs only (one per line) for piping
+
+### CLI Commands
+
+**search** - Quick search without saving
+```bash
+python cli.py search "keyword" [OPTIONS]
+  --category, -c      Category name or ID
+  --location, -l      Location name or ID
+  --min-price         Minimum price
+  --max-price         Maximum price
+  --format, -f        Output format (table|json|quiet)
+  --page-size         Results per page (default: 40)
+```
+
+**create** - Create new saved search interactively
+```bash
+python cli.py create <name>
+```
+
+**edit** - Edit existing saved search
+```bash
+python cli.py edit <name>
+```
+
+**list** - List all saved searches
+```bash
+python cli.py list
+```
+
+**delete** - Delete saved search
+```bash
+python cli.py delete <name> [--yes]
+```
+
+**run** - Run saved search(es)
+```bash
+python cli.py run <name>          # Run specific search
+python cli.py run --all            # Run all saved searches
+```
+
+**list-categories** - Browse categories
+```bash
+python cli.py list-categories [--filter <text>]
+```
+
+**list-locations** - Browse locations
+```bash
+python cli.py list-locations [--filter <text>]
+```
+
+### Fuzzy Matching
+
+The CLI accepts category and location names in addition to numeric IDs:
+
+**Examples:**
+- `--category computers` → Category ID 30
+- `--category "Computers And Electronics"` → Category ID 7
+- `--location TX_Austin` → Location ID 43
+- `--location austin` → Location ID 43 (fuzzy match)
+
+If the match is ambiguous, the CLI suggests alternatives:
+```
+Error: Ambiguous category 'comp'. Did you mean: Computers (30), ComputerComponents (465)?
+```
+
+### Output Formats
+
+**Table (default):**
+```
++----------+------------------------------------------+------------------+----------------------------------+
+| Price    | Title                                    | Time Remaining   | URL                              |
++==========+==========================================+==================+==================================+
+| $45.00   | Lenovo ThinkPad T480 Laptop             | 3 days, 10:30:00 | https://shopgoodwill.com/Item... |
++----------+------------------------------------------+------------------+----------------------------------+
+
+Total results: 1
+```
+
+**JSON:**
+```json
+[
+  {
+    "price": 45.0,
+    "listing": "Lenovo ThinkPad T480 Laptop",
+    "product_id": "12345678",
+    "url": "https://www.shopgoodwill.com/Item/12345678",
+    "end_date": "2026-01-25T23:30:00-05:00",
+    "duration_seconds": 295800.0
+  }
+]
+```
+
+**Quiet (URLs only):**
+```
+https://www.shopgoodwill.com/Item/12345678
+https://www.shopgoodwill.com/Item/87654321
+```
+
+### Integration with Existing Workflow
+
+The CLI is **completely backward compatible**:
+- `python main.py` still works exactly as before
+- Existing JSON files in saved_searches/ work with both methods
+- No changes to GoodWillSearch, GoodWillProduct, or QueryItem classes
+- CLI creates/reads standard JSON configuration files
 
 ## Architecture
 
