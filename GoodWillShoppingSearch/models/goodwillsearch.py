@@ -1,9 +1,14 @@
 from datetime import datetime
 import json
+import time
 
 from bs4 import BeautifulSoup
 import pytz
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from GoodWillShoppingSearch.models.queryitem import QueryItem
 from GoodWillShoppingSearch.enums.goodwillsearchgallery import GoodWillSearchGallery
@@ -21,29 +26,38 @@ class GoodWillSearch:
 
 
     def set_default_search(self):
-        self.url = "https://www.shopgoodwill.com/Listings"
+        self.url = "https://shopgoodwill.com/categories/listing"
         self._search_gallery = QueryItem("sg", GoodWillSearchGallery.Empty)
         self._keyword_search = QueryItem("st", "")
         self._categories = QueryItem("c", GoodWillCategories.Empty)
         self._good_will_location = QueryItem("s", GoodWillLocations.Empty)
         self._low_price = QueryItem("lp", 0)
         self._high_price = QueryItem("hp", 999999)
-        self._show_buy_now_only = QueryItem("sbn", False)
+        self._show_buy_now_only = QueryItem("sbn", "")
         self._show_pick_up_only = QueryItem("spo", False)
         self._hide_pick_up_only = QueryItem("snpo", False)
         self._show_one_cent_ship_only = QueryItem("socs", False)
-        self._search_description = QueryItem("sd", True)
+        self._search_description = QueryItem("sd", False)
         self._show_closed_auctions = QueryItem("sca", False)
-        self._closed_auction_end_date = QueryItem("caed", '11/14/2018')
-        self._day_back = QueryItem("cadb", 9)
+        self._closed_auction_end_date = QueryItem("caed", datetime.now().strftime('%m/%d/%Y'))
+        self._day_back = QueryItem("cadb", 7)
         self._search_canada = QueryItem("scs", False)
         self._search_international = QueryItem("sis", False)
-        self._field_order = QueryItem("col", 0)
-        self._page_number = QueryItem("p", 0)
+        self._field_order = QueryItem("col", 1)
+        self._page_number = QueryItem("p", 1)
         self._page_size = QueryItem("ps", 40)
-        self._short_description = QueryItem("desc", True)
+        self._short_description = QueryItem("desc", False)
         self._saved_search_id = QueryItem("ss", 0)
         self._use_buyer_preferences = QueryItem("UseBuyerPrefs", True)
+        self._show_us_only = QueryItem("sus", False)
+        self._collection_name = QueryItem("cln", 1)
+        self._category_ids = QueryItem("catIds", "")
+        self._property_name = QueryItem("pn", "")
+        self._without_care = QueryItem("wc", False)
+        self._multi_category_item = QueryItem("mci", False)
+        self._highest_manual_tag = QueryItem("hmt", False)
+        self._layout = QueryItem("layout", "grid")
+        self._in_house_pickup = QueryItem("ihp", True)
 
     def load_json_search_file(self, filename):
         with open(filename) as json_file:
@@ -118,7 +132,41 @@ class GoodWillSearch:
 
     def search(self, keyword_search: str):
         self.keyword_search = keyword_search
-        return self.parse_results(requests.get(self.search_url()).text)
+
+        # Setup Chrome options for headless browsing
+        chrome_options = Options()
+        chrome_options.add_argument('--headless=new')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
+
+        driver = None
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+            url = self.search_url()
+            driver.get(url)
+
+            # Wait for products to load - look for product elements
+            # The site uses Angular components, wait for them to render
+            try:
+                WebDriverWait(driver, 15).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".feat-item, .item-col, [class*='product']"))
+                )
+                # Give extra time for all products to render
+                time.sleep(2)
+            except:
+                # Timeout waiting for products, but continue anyway
+                pass
+
+            # Get the fully rendered HTML
+            html = driver.page_source
+
+            return self.parse_results(html)
+
+        finally:
+            if driver:
+                driver.quit()
 
     def search_multiple(self, keyword_search: set[str]):
         goodWillProducts = []
@@ -130,11 +178,23 @@ class GoodWillSearch:
     def parse_results(self, response):
         goodWillProducts = []
         soup = BeautifulSoup(response, 'html.parser')
-        products = soup.find_all('span', {'class': 'data-container'})
+
+        # Try new format first (feat-item elements)
+        products = soup.find_all('div', {'class': 'feat-item'})
+
+        # Fallback to old format if no products found
+        if not products:
+            products = soup.find_all('span', {'class': 'data-container'})
+
         for product in products:
-            goodWillProduct = GoodWillProduct(product, self.time_zone)
-            goodWillProduct.print_product()
-            goodWillProducts.append(goodWillProduct)
+            try:
+                goodWillProduct = GoodWillProduct(product, self.time_zone)
+                goodWillProduct.print_product()
+                goodWillProducts.append(goodWillProduct)
+            except Exception as e:
+                # Skip products that fail to parse
+                print(f"Warning: Failed to parse product: {e}")
+                continue
 
         return goodWillProducts
 
